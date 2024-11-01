@@ -12,6 +12,7 @@ if (!process.env.MONGODB_URI) {
 
     client = new MongoClient(uri);
     clientPromise = client.connect();
+    console.log('Connected to MongoDB');
 
 
 export default clientPromise;
