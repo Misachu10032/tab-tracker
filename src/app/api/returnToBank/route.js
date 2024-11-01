@@ -1,4 +1,4 @@
-// pages/api/borrowFromBank.js
+// pages/api/returnTokenToBank.js
 import clientPromise from '../../../lib/mongodb';
 
 export async function POST(req) {
@@ -22,17 +22,24 @@ export async function POST(req) {
             });
         }
 
-        // Increment the debt to the bank
+        // Check if the user owes anything to the bank
+        if (userDoc.Owes.bank <= 0) {
+            return new Response(JSON.stringify({ message: 'User does not owe anything to the bank.' }), {
+                status: 400,
+            });
+        }
+
+        // Decrement the debt to the bank
         await users.updateOne(
             { Name: user },
-            { $inc: { 'Owes.bank': 1 } } // Increment the amount owed to the bank
+            { $inc: { 'Owes.bank': -1 } } // Decrement the amount owed to the bank
         );
 
-        return new Response(JSON.stringify({ message: `1 token borrowed from the bank by ${user}.` }), {
+        return new Response(JSON.stringify({ message: `1 token returned to the bank by ${user}.` }), {
             status: 200
         });
     } catch (error) {
-        return new Response(JSON.stringify({ error: error.message, message: 'Error borrowing token from bank.' }), {
+        return new Response(JSON.stringify({ error: error.message, message: 'Error returning token to bank.' }), {
             status: 500
         });
     }

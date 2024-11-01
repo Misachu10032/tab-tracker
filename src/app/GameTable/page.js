@@ -8,7 +8,8 @@ export default function GameTable() {
   const [lender, setLender] = useState(null);
   const [action, setAction] = useState(null);
   const [message, setMessage] = useState("");
-  const [borrower, setBorrower] = useState(null); // State for the borrower
+  const [borrower, setBorrower] = useState(null);
+  const [summary, setSummary] = useState(""); // State to hold the summary
 
   // Function to handle when a user is added
   const handleUserAdded = (name) => {
@@ -71,11 +72,33 @@ export default function GameTable() {
     }
   };
 
+  const handleReturnToBank = async () => {
+    if (!selectedUser) {
+      setMessage("No user selected.");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/returnToBank", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ user: selectedUser }),
+      });
+      const data = await response.json();
+      setMessage(data.message);
+    } catch (error) {
+      console.error("Error returning token to bank:", error);
+      setMessage("Error returning token to bank.");
+    }
+  };
+
   const handleLendTo = async () => {
-    if (!lender || !borrower) return; // Ensure both lender and borrower are selected
+    if (!lender || !borrower) return;
     if (lender === borrower) {
       setMessage("Warning: Lender and borrower cannot be the same person.");
-      return; // Exit the function
+      return;
     }
 
     try {
@@ -93,7 +116,6 @@ export default function GameTable() {
       setMessage("Error lending token.");
     }
 
-    // Reset states after lending
     setLender(null);
     setBorrower(null);
     setAction(null);
@@ -109,7 +131,7 @@ export default function GameTable() {
         },
         body: JSON.stringify({ user }),
       });
-  
+
       const data = await response.json();
       if (response.ok) {
         setUsers((prevUsers) => prevUsers.filter((u) => u !== user));
@@ -122,10 +144,8 @@ export default function GameTable() {
       setMessage("Error deleting user.");
     }
   };
-  
 
   const handleTouchStart = (user) => {
-    // Store the user name in dataTransfer for drag and drop
     const event = new TouchEvent("touchmove", {
       bubbles: true,
       cancelable: true,
@@ -139,19 +159,30 @@ export default function GameTable() {
     handleDeleteUser(user);
   };
 
+  // Fetch summary from API
+  const handleFetchSummary = async () => {
+    try {
+      const response = await fetch("/api/summary");
+      const data = await response.json();
+      setSummary(data.message); // Set summary message from API response
+    } catch (error) {
+      console.error("Error fetching summary:", error);
+      setMessage("Error fetching summary.");
+    }
+  };
+
   return (
     <div className="flex flex-col items-center min-h-screen bg-gray-100">
       <div className="flex mt-10 items-center">
         <AddUser onUserAdded={handleUserAdded} />
         <div
-          className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center text-white text-lg font-bold cursor-pointer ml-4"
-          onDragOver={(e) => e.preventDefault()} // Prevent default to allow drop
+          className="w-16 h-18 rounded-full flex items-center justify-center text-white text-lg font-bold cursor-pointer ml-2"
+          onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => {
-            const user = e.dataTransfer.getData("text/plain"); // Get user name from drag data
-            handleDeleteUser(user); // Delete the user
+            const user = e.dataTransfer.getData("text/plain");
+            handleDeleteUser(user);
           }}
           onTouchEnd={() => {
-            // Simulate touch end as drop
             if (selectedUser) {
               handleDeleteUser(selectedUser);
             }
@@ -162,10 +193,9 @@ export default function GameTable() {
       </div>
 
       <div className="relative w-96 h-96 rounded-full bg-gray-200 flex items-center justify-center">
-        {/* Circular layout for user names */}
         {users.map((user, index) => {
-          const angle = (index / users.length) * (2 * Math.PI); // Calculate angle for the position
-          const radius = 120; // Radius of the circle
+          const angle = (index / users.length) * (2 * Math.PI);
+          const radius = 120;
           const x = Math.cos(angle) * radius;
           const y = Math.sin(angle) * radius;
 
@@ -174,15 +204,15 @@ export default function GameTable() {
               key={user}
               className={`absolute flex items-center justify-center w-16 h-16 rounded-full shadow-lg cursor-pointer transition-transform duration-200
                 ${selectedUser === user ? "bg-cyan-500 text-white" : ""} 
-                ${borrower === user ? "bg-yellow-400 text-white" : ""}`}
+                ${borrower === user ? "bg-yellow-500 text-white" : ""}`}
               style={{ transform: `translate(${x}px, ${y}px)` }}
               onClick={() => handleSelectUser(user)}
               draggable
               onDragStart={(e) => {
-                e.dataTransfer.setData("text/plain", user); // Store the user name in the drag data
+                e.dataTransfer.setData("text/plain", user);
               }}
-              onTouchStart={() => handleTouchStart(user)} // Handle touch start
-              onTouchEnd={() => handleTouchEnd(user)} // Handle touch end
+              onTouchStart={() => handleTouchStart(user)}
+              onTouchEnd={() => handleTouchEnd(user)}
             >
               {user}
             </div>
@@ -192,14 +222,18 @@ export default function GameTable() {
 
       {selectedUser && (
         <div className="mt-4">
-          <h2 className="text-lg font-semibold">
-            Selected User: {selectedUser}
-          </h2>
+          <h2 className="text-lg font-semibold">Selected User: {selectedUser}</h2>
           <button
             className="mr-2 bg-green-500 text-white p-2 rounded"
             onClick={() => handleAction("borrow")}
           >
             Borrow from Bank
+          </button>
+          <button
+            className="mr-2 bg-blue-500 text-white p-2 rounded"
+            onClick={handleReturnToBank}
+          >
+            Return to Bank
           </button>
           <button
             className="bg-yellow-500 text-white p-2 rounded"
@@ -215,7 +249,7 @@ export default function GameTable() {
           <h2 className="text-lg font-semibold">Select a Borrower:</h2>
           {borrower && (
             <button
-              className="mt-4 bg-blue-500 text-white p-2 rounded"
+              className="mt-4 bg-cyan-500 text-white p-2 rounded"
               onClick={handleLendTo}
             >
               Confirm Lend to {borrower}
@@ -225,6 +259,24 @@ export default function GameTable() {
       )}
 
       {message && <p className="mt-4 text-red-500">{message}</p>}
+
+      {/* Fetch Summary Button */}
+      <div className="fixed bottom-10 left-0 right-0 bg-white p-4 shadow flex justify-between">
+    <button
+      className="bg-blue-600 text-white p-2 rounded"
+      onClick={handleFetchSummary}
+    >
+      Fetch Summary
+    </button>
+
+    {/* Summary Section */}
+    {summary && (
+      <div className="ml-4 w-full">
+        <h2 className="text-lg font-semibold">Summary:</h2>
+        <pre className="whitespace-pre-wrap text-sm text-gray-700">{summary}</pre>
+      </div>
+    )}
+  </div>
     </div>
   );
 }

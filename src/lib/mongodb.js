@@ -12,6 +12,6 @@ if (!process.env.MONGODB_URI) {
 
     client = new MongoClient(uri);
     clientPromise = client.connect();
-console.log("we throw?")
+
 
 export default clientPromise;

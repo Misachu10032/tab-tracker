@@ -40,7 +40,7 @@ export async function POST(req) {
             );
         }
 
-        return new Response(JSON.stringify({ message: `Token lent from ${lender} to ${borrower}.` }), {
+        return new Response(JSON.stringify({ message: `1 token transfered from ${lender} to ${borrower}.` }), {
             status: 200
         });
     } catch (error) {
