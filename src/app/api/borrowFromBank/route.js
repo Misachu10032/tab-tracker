@@ -28,7 +28,7 @@ export async function POST(req) {
             { $inc: { 'Owes.bank': 1 } } // Increment the amount owed to the bank
         );
 
-        return new Response(JSON.stringify({ message: `Token borrowed from the bank by ${user} successfully.` }), {
+        return new Response(JSON.stringify({ message: `Token borrowed from the bank by ${user}.` }), {
             status: 200
         });
     } catch (error) {

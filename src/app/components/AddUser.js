@@ -55,7 +55,6 @@ const AddUser = ({ onUserAdded }) => {
                     +
                 </button>
             </form>
-            {message && <p className="mt-4 text-red-500 text-center">{message}</p>}
         </div>
     );
 };
