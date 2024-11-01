@@ -8,6 +8,7 @@ export async function GET(req) {
         const users = database.collection("users");
         
         const userList = await users.find({}).toArray(); // Fetch all users
+        console.log(userList,"I wnant to see the user list")
 
         const usersWithNames = userList.map(user => user.Name); // Extract user names
 
